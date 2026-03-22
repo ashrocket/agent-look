@@ -2,13 +2,18 @@ Tired of dragging Screenshot-2026-03-22-at-2.15.32-PM.png into the Claude comman
 
 Same. I am so lazy.
 
-Well now you don't have to drag those files — or add them to Claude Desktop either.
+Well now you don't have to drag those files — or add them to Claude Desktop, Gemini, or Codex either.
 
-Set your screenshot directory once. Take your screenshots. Come back to Claude and say /look. It finds what you captured in the last 3 minutes, reads them in a subagent (so your context stays clean), renames the generic filenames based on what's actually in the image, and asks if you want to use any of them for the current task.
+brew install it. Run one register command. Take your screenshots. Come back to your AI tool and say /look.
+
+It finds what you captured in the last 3 minutes, reads the text via Spotlight OCR (zero vision tokens), auto-renames the generic filenames based on what's in the image, and reports back. No prompts, no file picking.
+
+For the rare screenshot with no text (charts, graphics), it resizes to a thumbnail and dispatches a vision examiner — about 10x fewer tokens than reading the full Retina image.
 
 Bonus: macOS screenshot filenames contain a "narrow no-break space" (U+202F) before AM/PM that looks exactly like a regular space but breaks every shell rename command. I found out the hard way. The MCP server handles it correctly. You're welcome.
 
-agent-look — MIT licensed:
-👉 github.com/ashrocket/agent-look
+agent-look — MIT licensed, works with Claude Code, Claude Desktop, Gemini CLI, and Codex:
+
+brew tap ashrocket/agent-look && brew install agent-look && agent-look register
 
 (File an issue if something's broken. There are probably a million reasons I shouldn't have built this.)

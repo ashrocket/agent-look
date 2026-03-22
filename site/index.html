@@ -275,10 +275,10 @@
 
   <div class="hero">
     <h2>Stop dragging screenshots into Claude.</h2>
-    <p>Take a screenshot. Go back to Claude. Say <strong>/look</strong>. That's it.</p>
+    <p>Take a screenshot. Go back to Claude. Say <strong>/look</strong>. It finds your screenshots, reads the text via Spotlight OCR, renames the generic ones, and reports back. No prompts, no dragging, no token waste.</p>
     <div class="hero-buttons">
-      <a href="https://github.com/ashrocket/agent-look" class="btn btn-primary">Get it on GitHub</a>
-      <a href="#install" class="btn btn-secondary">Install in 2 minutes</a>
+      <a href="#install" class="btn btn-primary">brew install agent-look</a>
+      <a href="https://github.com/ashrocket/agent-look" class="btn btn-secondary">View on GitHub</a>
     </div>
   </div>
 
@@ -294,8 +294,8 @@
     <div class="steps">
       <div class="step">
         <div class="step-num">1</div>
-        <h4>Set your screenshots folder</h4>
-        <p>Run the installer. Point it at wherever macOS saves your screenshots. Done once.</p>
+        <h4>Install once</h4>
+        <p><code>brew install agent-look</code> then <code>agent-look register</code>. Wires up Claude, Gemini, and Codex automatically.</p>
       </div>
       <div class="step">
         <div class="step-num">2</div>
@@ -304,8 +304,8 @@
       </div>
       <div class="step">
         <div class="step-num">3</div>
-        <h4>Say <code>/look</code> in Claude</h4>
-        <p>Claude finds screenshots from the last 3 minutes, reads them in a subagent, renames the generic ones, and asks if you want to use them.</p>
+        <h4>Say <code>/look</code></h4>
+        <p>Finds screenshots from the last 3 minutes, reads text via Spotlight OCR, auto-renames generic filenames, and reports back. No prompts needed.</p>
       </div>
     </div>
   </div>
@@ -338,21 +338,21 @@
         <div class="icon">🤏</div>
         <div class="text">
           <strong>Token-efficient by design</strong>
-          <span>Shows you a list first. You pick which screenshots to load. Images are read in a isolated haiku subagent — never bloating your main context.</span>
+          <span>Uses Spotlight OCR (<code>kMDItemTextContent</code>) to read screenshot text for free — no vision tokens. Falls back to a thumbnail examiner (resized to 800px) only when OCR is empty. Most screenshots never need vision at all.</span>
         </div>
       </li>
       <li>
         <div class="icon">✏️</div>
         <div class="text">
-          <strong>Auto-renames generic filenames</strong>
-          <span>"Screenshot 2026-03-22 at 2.15.32 PM.png" becomes "2026-03-22_1415_login-error-state.png" — based on what's actually in the image.</span>
+          <strong>Auto-renames without asking</strong>
+          <span>"Screenshot 2026-03-22 at 2.15.32 PM.png" becomes "2026-03-22_1415_login-error-state.png" — fully automatic, no prompts. Skips files that already have descriptive names.</span>
         </div>
       </li>
       <li>
         <div class="icon">🔌</div>
         <div class="text">
-          <strong>Works in Claude Code and Claude Desktop</strong>
-          <span>Installs as a Claude Code plugin or as an MCP server for Claude Desktop. One installer handles both.</span>
+          <strong>Works everywhere</strong>
+          <span>One MCP server, four platforms. <code>agent-look register</code> wires up Claude Code, Claude Desktop, Gemini CLI, and Codex in one command.</span>
         </div>
       </li>
     </ul>
@@ -360,15 +360,27 @@
 
   <div class="install" id="install">
     <h3>Install</h3>
-    <h2>Claude Code (plugin)</h2>
+    <h2>Homebrew (recommended)</h2>
     <div class="code-block">
-      <span class="comment"># add the marketplace and install</span><br>
+      <span class="comment"># install and register in all detected AI tools</span><br>
+      <span class="cmd">brew tap ashrocket/agent-look</span><br>
+      <span class="cmd">brew install agent-look</span><br>
+      <span class="cmd">agent-look register</span>
+    </div>
+    <p class="note" style="margin-bottom:40px">
+      Registers the MCP server in Claude Code, Claude Desktop, Gemini CLI, and Codex automatically.<br>
+      <code style="background:rgba(0,0,0,0.3);padding:2px 6px;border-radius:3px;color:#c8f0c8">agent-look status</code> to check,
+      <code style="background:rgba(0,0,0,0.3);padding:2px 6px;border-radius:3px;color:#c8f0c8">agent-look unregister</code> to remove.
+    </p>
+    <h2>Claude Code plugin</h2>
+    <div class="code-block">
+      <span class="comment"># install as a plugin (includes /look skill + screenshot-examiner agent)</span><br>
       <span class="cmd">/plugin marketplace add https://github.com/ashrocket/agent-look</span><br>
       <span class="cmd">/plugin install agent-look@agent-look-dev</span>
     </div>
-    <h2 style="margin-top:40px">Claude Desktop (MCP)</h2>
+    <h2 style="margin-top:40px">Manual (git clone)</h2>
     <div class="code-block">
-      <span class="comment"># clone and run the installer</span><br>
+      <span class="comment"># clone and run the installer — sets up Claude Desktop MCP</span><br>
       <span class="cmd">git clone git@github.com:ashrocket/agent-look.git</span><br>
       <span class="cmd">cd agent-look && bash install.sh</span>
     </div>
