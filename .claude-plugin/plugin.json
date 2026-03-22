@@ -1,0 +1,19 @@
+{
+  "name": "agent-look",
+  "version": "0.2.0",
+  "description": "Scan your screengrabs folder for recent screenshots, preview before loading, and auto-rename generic filenames with descriptive names. Bypasses iCloud TCC restrictions via Spotlight.",
+  "author": {
+    "name": "Ashley Raiteri",
+    "email": "recall-skill@raiteri.net"
+  },
+  "homepage": "https://github.com/ashrocket/agent-look",
+  "repository": "https://github.com/ashrocket/agent-look",
+  "license": "MIT",
+  "keywords": ["screenshots", "screencapture", "icloud", "rename", "vision"],
+  "mcpServers": {
+    "agent-look": {
+      "command": "node",
+      "args": ["${CLAUDE_PLUGIN_ROOT}/mcp/server.js"]
+    }
+  }
+}

@@ -1,0 +1,15 @@
+{
+  "name": "agent-look-mcp",
+  "version": "0.1.0",
+  "description": "MCP server for agent-look — screenshot finder and renamer for Claude Desktop",
+  "type": "module",
+  "bin": {
+    "agent-look-mcp": "./server.js"
+  },
+  "scripts": {
+    "start": "node server.js"
+  },
+  "dependencies": {
+    "@modelcontextprotocol/sdk": "^1.0.0"
+  }
+}
