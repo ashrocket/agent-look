@@ -47,9 +47,13 @@ Found 7 screenshots with generic names in the last 3 minutes. Want me to examine
 
 Wait for confirmation before continuing. If 4 or fewer, proceed automatically — no prompt needed.
 
-### Step 4: Examine Generic Screenshots
+### Step 4: Generate Slugs — OCR First, Examiner Fallback
 
-For each generic-named screenshot, dispatch a **screenshot-examiner** subagent in parallel:
+The MCP tool returns an `ocr_text` field for generic-named files when Spotlight has OCR data. This is text macOS already extracted — reading it costs only text tokens, not vision tokens.
+
+**For files WITH `ocr_text`:** Generate a descriptive slug directly from the OCR text. Look at the visible text to determine what app, page, or content the screenshot shows. No subagent needed — just pick a slug and proceed to rename.
+
+**For files WITHOUT `ocr_text`** (pure graphics, charts with no text, or Spotlight hasn't indexed yet): Dispatch a **screenshot-examiner** subagent as a fallback:
 
 ```
 Agent tool call:
@@ -57,38 +61,36 @@ Agent tool call:
   prompt: "Examine the screenshot at /full/path/to/image.png"
 ```
 
-Launch all examiner agents concurrently in a single message — do not wait between dispatches.
-
-**CRITICAL:** Do NOT read image files directly in the main context — always delegate to the subagent. This is the core token-efficiency design.
+Launch all examiner agents concurrently. Do NOT read image files in the main context — always delegate to the subagent.
 
 ### Step 5: Rename Automatically
 
-As each examiner returns, rename the file immediately — do NOT ask for confirmation:
+Rename each file immediately — do NOT ask for confirmation:
 
-1. Use the MCP tool `rename_screenshot` with the file path and the examiner's suggested slug. The MCP server handles date-stamping (`YYYY-MM-DD_HHMM_slug.ext`), slug sanitization, and collision avoidance.
-2. If the MCP tool is unavailable, use Python — **never `mv`**. macOS screenshot filenames contain U+202F (narrow no-break space) before AM/PM which is visually identical to a regular space but breaks all shell string matching. Use `python3 -c "import os; os.rename('src', 'dst')"` with the exact byte paths returned by `mdfind`.
+1. Use the MCP tool `rename_screenshot` with the file path and the slug (from OCR or examiner). The MCP server handles date-stamping (`YYYY-MM-DD_HHMM_slug.ext`), slug sanitization, and collision avoidance.
+2. If the MCP tool is unavailable, rename directly with `mv` using the format `YYYY-MM-DD_HHMM_descriptive-slug.ext` (date-time from file mtime, slug lowercase/hyphens/max 40 chars).
 
 ### Step 6: Report Results
 
-Present a compact summary of everything that happened:
+Present a compact summary:
 
 ```
 Processed 3 screenshots (last 3 min):
 
   Screenshot 2026-03-18 at 2.15.32 PM.png → 2026-03-18_1415_ar-aging-summary-table.png
-    AR aging report showing summary by payer with outstanding balances
+    AR aging report showing summary by payer with outstanding balances (from OCR)
 
   Screenshot 2026-03-18 at 2.03.11 PM.png → 2026-03-18_1403_claims-filter-panel.png
-    Claims dashboard filter panel with date range and status selectors
+    Claims dashboard filter panel with date range selectors (from examiner)
 
   ar-aging-drilldown.png — already named, skipped
 
 Want me to use any of these for the current task?
 ```
 
-Include the examiner's description under each rename so the user has context without needing to open the files.
+Note which slugs came from OCR vs examiner so the user knows what was cheap vs expensive.
 
-**CRITICAL:** Do NOT re-read image files in the main context. Use only the text descriptions returned by the screenshot-examiner subagents.
+**CRITICAL:** Do NOT read image files in the main context. Use OCR text or examiner descriptions only.
 
 ## Edge Cases
 

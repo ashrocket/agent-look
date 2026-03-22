@@ -25,7 +25,7 @@ const TOOLS = [
   {
     name: "find_recent_screenshots",
     description:
-      "List screenshots from the screengrabs folder modified within the last N minutes. Returns filename, full path, modification time, and whether the name is generic.",
+      "List screenshots from the screengrabs folder modified within the last N minutes. Returns filename, full path, modification time, whether the name is generic, and Spotlight OCR text for generic-named files (avoids tokenizing the image).",
     inputSchema: {
       type: "object",
       properties: {
@@ -73,6 +73,21 @@ function isGenericName(filename) {
   return /^(Screenshot|Screen Shot|Simulator Screen)/i.test(filename);
 }
 
+const MAX_OCR_LENGTH = 500;
+
+function getOcrText(filepath) {
+  try {
+    const raw = execSync(
+      `mdls -raw -name kMDItemTextContent ${JSON.stringify(filepath)}`,
+      { encoding: "utf8", timeout: 5000 }
+    ).trim();
+    if (!raw || raw === "(null)") return null;
+    return raw.length > MAX_OCR_LENGTH ? raw.slice(0, MAX_OCR_LENGTH) : raw;
+  } catch {
+    return null;
+  }
+}
+
 function findRecentScreenshots(minutes = DEFAULT_MINUTES) {
   const cutoff = Date.now() - minutes * 60 * 1000;
 
@@ -93,7 +108,13 @@ function findRecentScreenshots(minutes = DEFAULT_MINUTES) {
         try {
           const stat = statSync(filepath);
           const mtime = stat.mtimeMs;
-          return [{ name, path: filepath, mtime, modified: humanRelative(mtime), size_bytes: stat.size, generic: isGenericName(name) }];
+          const generic = isGenericName(name);
+          const entry = { name, path: filepath, mtime, modified: humanRelative(mtime), size_bytes: stat.size, generic };
+          if (generic) {
+            const ocr = getOcrText(filepath);
+            if (ocr) entry.ocr_text = ocr;
+          }
+          return [entry];
         } catch {
           return []; // file disappeared (iCloud sync race) — skip it
         }
