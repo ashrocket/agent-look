@@ -2,7 +2,7 @@ class AgentLook < Formula
   desc "Screenshot scanner & renamer MCP server — works with Claude, Gemini, Codex"
   homepage "https://github.com/ashrocket/agent-look"
   url "https://github.com/ashrocket/agent-look/archive/refs/tags/v0.2.0.tar.gz"
-  # sha256 "REPLACE_WITH_ACTUAL_SHA256_AFTER_TAGGING"
+  sha256 "d6cb860fdd42fdae6903467923cd3d5f86dc620b0517990d2028791b3381f6e6"
   license "MIT"
 
   depends_on :macos
@@ -30,25 +30,17 @@ class AgentLook < Formula
     SH
   end
 
-  def post_install
-    # Register MCP server in detected AI tool configs
-    system bin/"agent-look", "register"
-  end
-
   def caveats
     <<~EOS
-      agent-look MCP server has been registered in detected AI tool configs.
-
-      To check registration status:
-        agent-look status
-
-      To manually register/unregister:
+      To register the MCP server in your AI tools, run:
         agent-look register
-        agent-look unregister
 
-      The MCP server can also be started directly:
-        agent-look serve
-        agent-look-mcp
+      This wires up Claude Desktop, Claude Code, Gemini CLI, and Codex.
+
+      Other commands:
+        agent-look status       Check registration status
+        agent-look unregister   Remove from all AI tools
+        agent-look serve        Start the MCP server directly
 
       For Claude Code, you can also install as a plugin:
         claude plugin add #{libexec}

@@ -105,9 +105,17 @@ for (const p of PLATFORMS) {
       continue;
     }
     delete config[p.key][MCP_NAME];
-    writeFileSync(p.path, p.write(config));
-    console.log(`  ${p.name}: ✓ removed`);
-    changed++;
+    try {
+      writeFileSync(p.path, p.write(config));
+      console.log(`  ${p.name}: ✓ removed`);
+      changed++;
+    } catch (e) {
+      if (e.code === "EPERM" || e.code === "EACCES") {
+        console.log(`  ${p.name}: skipped (no write permission)`);
+      } else {
+        console.log(`  ${p.name}: failed (${e.message})`);
+      }
+    }
   } else {
     // Register
     if (isRegistered(config, p.key)) {
@@ -122,9 +130,17 @@ for (const p of PLATFORMS) {
     }
     if (!config[p.key]) config[p.key] = {};
     config[p.key][MCP_NAME] = mcpEntry();
-    writeFileSync(p.path, p.write(config));
-    console.log(`  ${p.name}: ✓ registered`);
-    changed++;
+    try {
+      writeFileSync(p.path, p.write(config));
+      console.log(`  ${p.name}: ✓ registered`);
+      changed++;
+    } catch (e) {
+      if (e.code === "EPERM" || e.code === "EACCES") {
+        console.log(`  ${p.name}: skipped (no write permission — run outside sandbox)`);
+      } else {
+        console.log(`  ${p.name}: failed (${e.message})`);
+      }
+    }
   }
 }
 
