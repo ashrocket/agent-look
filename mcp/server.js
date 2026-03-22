@@ -6,11 +6,15 @@ import {
   ListToolsRequestSchema,
 } from "@modelcontextprotocol/sdk/types.js";
 import { execSync } from "child_process";
-import { readFileSync, renameSync, statSync } from "fs";
+import { existsSync, readFileSync, renameSync, statSync } from "fs";
 import { join, extname, basename, dirname } from "path";
 import { homedir } from "os";
 
-const PKG = JSON.parse(readFileSync(new URL("./package.json", import.meta.url), "utf8"));
+// Try root package.json first (brew/npm install), fall back to local
+const PKG = JSON.parse(readFileSync(
+  new URL(existsSync(new URL("../package.json", import.meta.url))
+    ? "../package.json" : "./package.json", import.meta.url), "utf8"
+));
 const DEFAULT_MINUTES = 3;
 const MAX_RENAME_SUFFIX = 99;
 

@@ -1,0 +1,35 @@
+{
+  "name": "agent-look",
+  "version": "0.2.0",
+  "description": "Screenshot scanner and renamer MCP server. Finds recent screenshots via Spotlight, extracts OCR text, and auto-renames generic filenames. Works with Claude Code, Claude Desktop, Gemini CLI, and Codex.",
+  "type": "module",
+  "bin": {
+    "agent-look": "./bin/agent-look.js"
+  },
+  "scripts": {
+    "start": "node mcp/server.js",
+    "register": "node bin/register.js"
+  },
+  "files": [
+    "bin/",
+    "mcp/",
+    "agents/",
+    "skills/",
+    ".claude-plugin/"
+  ],
+  "dependencies": {
+    "@modelcontextprotocol/sdk": "^1.0.0"
+  },
+  "author": {
+    "name": "Ashley Raiteri",
+    "email": "recall-skill@raiteri.net"
+  },
+  "homepage": "https://github.com/ashrocket/agent-look",
+  "repository": "https://github.com/ashrocket/agent-look",
+  "license": "MIT",
+  "keywords": ["mcp", "screenshots", "screencapture", "icloud", "rename", "vision", "spotlight", "ocr"],
+  "os": ["darwin"],
+  "engines": {
+    "node": ">=18"
+  }
+}
