@@ -66,7 +66,7 @@ Launch all examiner agents concurrently in a single message — do not wait betw
 As each examiner returns, rename the file immediately — do NOT ask for confirmation:
 
 1. Use the MCP tool `rename_screenshot` with the file path and the examiner's suggested slug. The MCP server handles date-stamping (`YYYY-MM-DD_HHMM_slug.ext`), slug sanitization, and collision avoidance.
-2. If the MCP tool is unavailable, rename directly with `mv` using the format `YYYY-MM-DD_HHMM_descriptive-slug.ext` (date-time from file mtime, slug lowercase/hyphens/max 40 chars).
+2. If the MCP tool is unavailable, use Python — **never `mv`**. macOS screenshot filenames contain U+202F (narrow no-break space) before AM/PM which is visually identical to a regular space but breaks all shell string matching. Use `python3 -c "import os; os.rename('src', 'dst')"` with the exact byte paths returned by `mdfind`.
 
 ### Step 6: Report Results
 

@@ -4,11 +4,11 @@ Same. I am so lazy.
 
 Well now you don't have to drag those files — or add them to Claude Desktop either.
 
-Set your screenshot directory once. Take your screenshots. Come back to Claude and say /look (or just "look at these screenshots from the app"). Claude finds what you captured, shows you a preview list, and only loads what you pick.
+Set your screenshot directory once. Take your screenshots. Come back to Claude and say /look. It finds what you captured in the last 3 minutes, reads them in a subagent (so your context stays clean), renames the generic filenames based on what's actually in the image, and asks if you want to use any of them for the current task.
 
-It even renames the generic filenames based on what's actually in the image.
+Bonus: macOS screenshot filenames contain a "narrow no-break space" (U+202F) before AM/PM that looks exactly like a regular space but breaks every shell rename command. I found out the hard way. The MCP server handles it correctly. You're welcome.
 
-agent-look — dead simple, MIT licensed:
+agent-look — MIT licensed:
 👉 github.com/ashrocket/agent-look
 
-(File an issue if something's broken. PRs welcome. There are probably a million reasons I shouldn't have built this.)
+(File an issue if something's broken. There are probably a million reasons I shouldn't have built this.)

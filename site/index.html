@@ -305,7 +305,7 @@
       <div class="step">
         <div class="step-num">3</div>
         <h4>Say <code>/look</code> in Claude</h4>
-        <p>Claude finds your recent screenshots, previews them, and only loads what you pick.</p>
+        <p>Claude finds screenshots from the last 3 minutes, reads them in a subagent, renames the generic ones, and asks if you want to use them.</p>
       </div>
     </div>
   </div>
@@ -324,7 +324,14 @@
         <div class="icon">🔍</div>
         <div class="text">
           <strong>Bypasses iCloud TCC restrictions</strong>
-          <span>Uses <code>mdfind kMDItemIsScreenCapture</code> — Spotlight metadata works even on iCloud paths where <code>find</code> throws "Operation not permitted".</span>
+          <span>Uses <code>mdfind -onlyin … kMDItemIsScreenCapture=1</code> — Spotlight metadata works on iCloud paths where <code>find</code> throws "Operation not permitted".</span>
+        </div>
+      </li>
+      <li>
+        <div class="icon">🫥</div>
+        <div class="text">
+          <strong>Handles the U+202F narrow no-break space</strong>
+          <span>macOS uses a visually-identical-but-different space before AM/PM in screenshot names. Shell <code>mv</code> silently fails on it. The MCP server uses <code>fs.renameSync()</code> with exact Spotlight byte paths — no shell, no problem.</span>
         </div>
       </li>
       <li>
