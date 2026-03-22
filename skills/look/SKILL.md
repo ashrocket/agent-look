@@ -1,57 +1,55 @@
 ---
 name: look
 description: This skill should be used when the user says "/look", "look at my screenshots", "check my screengrabs", "any new screenshots?", "look at what I captured", "rename my screenshots", or wants to review recent screenshots from their macOS screengrabs folder. Also triggers when the user mentions renaming generic screenshot filenames or wants to scan for recent screen captures.
-argument-hint: "[minutes] — optional recency window, default 30"
+argument-hint: "[minutes] — optional recency window, default 3"
 allowed-tools: ["Read", "Bash", "Glob", "Agent"]
 ---
 
-# Look — Screenshot Scanner & Renamer
+# Look — Automatic Screenshot Scanner & Renamer
 
-Scan the user's macOS screengrabs folder for recent screenshots, present them for review before loading (to save tokens), and rename generically-named files with descriptive, date-stamped names.
+Scan the user's macOS screengrabs folder for recent screenshots, automatically examine any with generic names, and rename them with descriptive date-stamped names. No user interaction required — runs end-to-end automatically.
 
 ## Configuration
 
 - **Screengrabs folder:** set via `SCREENGRABS_DIR` env var (configured by installer), defaults to `~/Library/Mobile Documents/com~apple~CloudDocs/Downloads/screengrabs`
-- **Default recency window:** 30 minutes
-- **Accepts argument:** optional minutes override (e.g., `/look 60` for last hour)
+- **Default recency window:** 3 minutes (captures screenshots the user just took)
+- **Accepts argument:** optional minutes override (e.g., `/look 30` for last half hour)
 
 ## Workflow
 
 ### Step 1: Find Recent Screenshots
 
-Use `mdfind` with `kMDItemIsScreenCapture` — this bypasses macOS TCC restrictions and works with iCloud Drive paths where `find` would fail with "Operation not permitted":
+Use the MCP tool `find_recent_screenshots` with the minutes argument (default 3). If the MCP tool is unavailable, fall back to direct `mdfind`:
 
 ```bash
-mdfind 'kMDItemIsScreenCapture = 1' -attr kMDItemFSContentChangeDate 2>/dev/null
+mdfind -onlyin "$SCREENGRABS_DIR" 'kMDItemIsScreenCapture = 1' 2>/dev/null
 ```
 
-Filter to the configured screengrabs folder and sort by most recent. To apply the recency window, filter by `kMDItemFSContentChangeDate` in the results (parse the date and compare to cutoff).
+Filter by modification time against the recency cutoff and sort by most recent.
 
-### Step 2: Present File List
+### Step 2: Filter to Generic Names Only
 
-If no files found, report "No screenshots in the last N minutes" and stop.
+Separate the results into two lists:
+- **Generic** — filename starts with "Screenshot", "Screen Shot", or "Simulator Screen" (case-insensitive). These need examining and renaming.
+- **Already named** — everything else. These are already descriptive and need no action.
 
-If files found, present a numbered list showing:
-- Filename
-- Modification time (human-readable)
-- Whether the name looks generic (starts with "Screenshot" or "Screen Shot" or "Simulator Screen")
+If no screenshots at all, report "No screenshots in the last N minutes" and stop.
 
-Example output:
+If screenshots exist but none are generic, briefly list them (name + relative time) and note they're already renamed. Stop.
+
+### Step 3: Check Count & Confirm if Needed
+
+If there are **more than 4 generic-named screenshots**, pause and ask the user before proceeding:
+
 ```
-Found 3 screenshots in the last 30 minutes:
-
-1. Screenshot 2026-03-18 at 2.15.32 PM.png (2 min ago) ← generic name
-2. ar-aging-drilldown.png (12 min ago)
-3. Screenshot 2026-03-18 at 2.03.11 PM.png (14 min ago) ← generic name
-
-Which would you like me to examine? (numbers, "all", or "none")
+Found 7 screenshots with generic names in the last 3 minutes. Want me to examine and rename all of them?
 ```
 
-**CRITICAL:** Do NOT read any image files yet. Wait for the user to choose.
+Wait for confirmation before continuing. If 4 or fewer, proceed automatically — no prompt needed.
 
-### Step 3: Examine Selected Screenshots
+### Step 4: Examine Generic Screenshots
 
-For each selected screenshot, use the **Agent tool** to dispatch a `screenshot-examiner` subagent:
+For each generic-named screenshot, dispatch a **screenshot-examiner** subagent in parallel:
 
 ```
 Agent tool call:
@@ -59,35 +57,41 @@ Agent tool call:
   prompt: "Examine the screenshot at /full/path/to/image.png"
 ```
 
-The subagent reads the image and returns a 1-2 sentence description + a suggested filename slug. Present the subagent's findings to the user.
+Launch all examiner agents concurrently in a single message — do not wait between dispatches.
 
-**CRITICAL:** Do NOT read image files directly in the main context — always delegate to the subagent. This is the core token-efficiency design. If an image is read in the main conversation, the token savings are lost.
+**CRITICAL:** Do NOT read image files directly in the main context — always delegate to the subagent. This is the core token-efficiency design.
 
-### Step 4: Rename Generic Files
+### Step 5: Rename Automatically
 
-For files with generic names (starting with "Screenshot", "Screen Shot", or "Simulator Screen"):
+As each examiner returns, rename the file immediately — do NOT ask for confirmation:
 
-1. Use the description from the examiner to generate a filename
-2. Format: `YYYY-MM-DD_HHMM_descriptive-slug.ext`
-   - Date-time from the file's modification time
-   - Slug: lowercase, hyphens, max 40 chars, no special characters
-3. Show the proposed rename and ask for confirmation
-4. Rename with `mv` (preserve the original extension)
+1. Use the MCP tool `rename_screenshot` with the file path and the examiner's suggested slug. The MCP server handles date-stamping (`YYYY-MM-DD_HHMM_slug.ext`), slug sanitization, and collision avoidance.
+2. If the MCP tool is unavailable, rename directly with `mv` using the format `YYYY-MM-DD_HHMM_descriptive-slug.ext` (date-time from file mtime, slug lowercase/hyphens/max 40 chars).
 
-Example rename:
+### Step 6: Report Results
+
+Present a compact summary of everything that happened:
+
 ```
-Screenshot 2026-03-18 at 2.15.32 PM.png → 2026-03-18_1415_ar-aging-summary-table.png
+Processed 3 screenshots (last 3 min):
+
+  Screenshot 2026-03-18 at 2.15.32 PM.png → 2026-03-18_1415_ar-aging-summary-table.png
+    AR aging report showing summary by payer with outstanding balances
+
+  Screenshot 2026-03-18 at 2.03.11 PM.png → 2026-03-18_1403_claims-filter-panel.png
+    Claims dashboard filter panel with date range and status selectors
+
+  ar-aging-drilldown.png — already named, skipped
+
+Want me to use any of these for the current task?
 ```
 
-### Step 5: Offer Context
+Include the examiner's description under each rename so the user has context without needing to open the files.
 
-After examining, ask: "Want me to use any of these screenshots for the current task?"
-
-**CRITICAL:** Do NOT re-read image files in the main context. Use only the text descriptions returned by the screenshot-examiner subagent. The images are already described — reference those descriptions to assist the user.
+**CRITICAL:** Do NOT re-read image files in the main context. Use only the text descriptions returned by the screenshot-examiner subagents.
 
 ## Edge Cases
 
 - If `mdfind` returns no results, check if the screengrabs folder path is correct with `defaults read com.apple.screencapture location`
-- If a rename target already exists, append a numeric suffix (`-2`, `-3`)
-- If the user says "all", examine all files but still confirm renames individually
-- For very large screenshots, check `kMDItemFSSize` from mdfind before dispatching the examiner. If over 10,000,000 bytes, warn the user and ask before proceeding
+- If a rename target already exists, the MCP server appends a numeric suffix (`-2`, `-3`) automatically
+- For very large screenshots (over 10 MB), warn the user before dispatching the examiner

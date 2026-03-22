@@ -27,11 +27,10 @@ echo "  Folder: $SCREENGRABS"
 # -- Register MCP in Claude Desktop --------------------------------------
 echo ""
 echo "Registering MCP server in Claude Desktop..."
-NODE_BIN="$(which node)"
 
 MCP_ENTRY=$(cat <<JSON
 {
-  "command": "$NODE_BIN",
+  "command": "node",
   "args": ["$SCRIPT_DIR/mcp/server.js"],
   "env": {
     "SCREENGRABS_DIR": "$SCREENGRABS"

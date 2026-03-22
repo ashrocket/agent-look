@@ -6,9 +6,13 @@ import {
   ListToolsRequestSchema,
 } from "@modelcontextprotocol/sdk/types.js";
 import { execSync } from "child_process";
-import { existsSync, renameSync, statSync } from "fs";
+import { readFileSync, renameSync, statSync } from "fs";
 import { join, extname, basename, dirname } from "path";
 import { homedir } from "os";
+
+const PKG = JSON.parse(readFileSync(new URL("./package.json", import.meta.url), "utf8"));
+const DEFAULT_MINUTES = 3;
+const MAX_RENAME_SUFFIX = 99;
 
 const SCREENGRABS =
   process.env.SCREENGRABS_DIR ||
@@ -27,8 +31,8 @@ const TOOLS = [
       properties: {
         minutes: {
           type: "number",
-          description: "How far back to look (default: 30)",
-          default: 30,
+          description: `How far back to look (default: ${DEFAULT_MINUTES})`,
+          default: DEFAULT_MINUTES,
         },
       },
     },
@@ -69,45 +73,54 @@ function isGenericName(filename) {
   return /^(Screenshot|Screen Shot|Simulator Screen)/i.test(filename);
 }
 
-function findRecentScreenshots(minutes = 30) {
+function findRecentScreenshots(minutes = DEFAULT_MINUTES) {
   const cutoff = Date.now() - minutes * 60 * 1000;
 
   let files;
+  let warning;
   try {
-    // kMDItemIsScreenCapture bypasses TCC — works on iCloud paths where find fails
+    // Spotlight bypasses TCC — works on iCloud paths where `find` fails
     const raw = execSync(
-      `mdfind 'kMDItemIsScreenCapture = 1'`,
+      `mdfind -onlyin ${JSON.stringify(SCREENGRABS)} 'kMDItemIsScreenCapture = 1'`,
       { encoding: "utf8" }
     );
     files = raw
       .trim()
       .split("\n")
       .filter(Boolean)
-      .filter((filepath) => dirname(filepath) === SCREENGRABS)
-      .map((filepath) => {
+      .flatMap((filepath) => {
         const name = basename(filepath);
-        const stat = statSync(filepath);
-        const mtime = stat.mtimeMs;
-        return { name, path: filepath, mtime, modified: humanRelative(mtime), size_bytes: stat.size, generic: isGenericName(name) };
+        try {
+          const stat = statSync(filepath);
+          const mtime = stat.mtimeMs;
+          return [{ name, path: filepath, mtime, modified: humanRelative(mtime), size_bytes: stat.size, generic: isGenericName(name) }];
+        } catch {
+          return []; // file disappeared (iCloud sync race) — skip it
+        }
       })
       .filter((f) => f.mtime >= cutoff)
       .sort((a, b) => b.mtime - a.mtime);
-  } catch {
+  } catch (e) {
     files = [];
+    warning = `mdfind failed: ${e.message}`;
   }
 
-  return { folder: SCREENGRABS, minutes, count: files.length, files };
+  const result = { folder: SCREENGRABS, minutes, count: files.length, files };
+  if (warning) result.warning = warning;
+  return result;
 }
 
 function renameScreenshot(filePath, slug) {
-  if (!existsSync(filePath)) {
+  let stat;
+  try {
+    stat = statSync(filePath);
+  } catch {
     return { error: `File not found: ${filePath}` };
   }
 
-  const stat = statSync(filePath);
   const mtime = new Date(stat.mtimeMs);
   const ymd = mtime.toISOString().slice(0, 10);
-  const hhmm = mtime.toTimeString().slice(0, 5).replace(":", "");
+  const hhmm = `${String(mtime.getHours()).padStart(2, '0')}${String(mtime.getMinutes()).padStart(2, '0')}`;
   const ext = extname(filePath);
   const dir = dirname(filePath);
 
@@ -118,22 +131,29 @@ function renameScreenshot(filePath, slug) {
     .replace(/^-|-$/g, "")
     .slice(0, 40);
 
-  let newName = `${ymd}_${hhmm}_${cleanSlug}${ext}`;
-  let newPath = join(dir, newName);
+  const base = `${ymd}_${hhmm}_${cleanSlug}`;
+  let newPath = join(dir, `${base}${ext}`);
 
   let suffix = 2;
-  while (existsSync(newPath)) {
-    newName = `${ymd}_${hhmm}_${cleanSlug}-${suffix}${ext}`;
-    newPath = join(dir, newName);
+  while (suffix <= MAX_RENAME_SUFFIX) {
+    try {
+      statSync(newPath);
+    } catch {
+      break; // path is available
+    }
+    newPath = join(dir, `${base}-${suffix}${ext}`);
     suffix++;
+  }
+  if (suffix > MAX_RENAME_SUFFIX) {
+    return { error: `Too many collisions for slug "${cleanSlug}" in ${dir}` };
   }
 
   renameSync(filePath, newPath);
-  return { old_path: filePath, new_path: newPath, new_name: newName };
+  return { old_path: filePath, new_path: newPath, new_name: basename(newPath) };
 }
 
 const server = new Server(
-  { name: "agent-look", version: "0.1.0" },
+  { name: "agent-look", version: PKG.version },
   { capabilities: { tools: {} } }
 );
 
@@ -143,7 +163,7 @@ server.setRequestHandler(CallToolRequestSchema, async (req) => {
   const { name, arguments: args } = req.params;
 
   if (name === "find_recent_screenshots") {
-    const result = findRecentScreenshots(args?.minutes ?? 30);
+    const result = findRecentScreenshots(args?.minutes ?? DEFAULT_MINUTES);
     return { content: [{ type: "text", text: JSON.stringify(result, null, 2) }] };
   }
 

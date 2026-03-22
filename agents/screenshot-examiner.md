@@ -1,22 +1,22 @@
 ---
 name: screenshot-examiner
-description: Use this agent to examine a screenshot image and return a brief description plus a suggested descriptive filename. Keeps image tokens out of the main conversation context. Examples:
+description: Use this agent to examine a screenshot image and return a brief description plus a suggested descriptive filename. Keeps image tokens out of the main conversation context. Dispatched automatically by the /look skill for generic-named screenshots. Examples:
 
   <example>
-  Context: The /look skill found recent screenshots and the user wants to examine one
-  user: "1"
-  assistant: "I'll dispatch the screenshot-examiner to analyze that image."
+  Context: The /look skill found generic-named screenshots and is auto-renaming them
+  user: "/look"
+  assistant: "I'll dispatch screenshot-examiner agents for each generic-named file."
   <commentary>
-  User selected a screenshot from the /look list. The examiner reads the image in a subagent to avoid bloating the main context with image tokens.
+  The /look skill automatically dispatches examiners in parallel for all generic-named screenshots. Each runs in a subagent to keep image tokens out of the main context.
   </commentary>
   </example>
 
   <example>
-  Context: User wants to examine multiple screenshots from the screengrabs folder
-  user: "all"
-  assistant: "I'll dispatch screenshot-examiner agents for each file."
+  Context: User wants to examine a specific screenshot
+  user: "examine this screenshot at /path/to/image.png"
+  assistant: "I'll dispatch the screenshot-examiner to analyze that image."
   <commentary>
-  Multiple screenshots need examination. Each gets its own subagent to keep image data isolated from the main context.
+  Direct examination request. The examiner reads the image in a subagent to avoid bloating the main context.
   </commentary>
   </example>
 
