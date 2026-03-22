@@ -64,21 +64,32 @@ Found 7 screenshots with generic names in the last 3 minutes. Want me to examine
 
 Wait for confirmation before continuing. If 4 or fewer, proceed automatically — no prompt needed.
 
-### Step 4: Generate Slugs — OCR First, Examiner Fallback
+### Step 4: Generate Slugs — OCR First, Thumbnail Examiner Fallback
 
 The MCP tool returns an `ocr_text` field for generic-named files when Spotlight has OCR data. This is text macOS already extracted — reading it costs only text tokens, not vision tokens.
 
 **For files WITH `ocr_text`:** Generate a descriptive slug directly from the OCR text. Look at the visible text to determine what app, page, or content the screenshot shows. No subagent needed — just pick a slug and proceed to rename.
 
-**For files WITHOUT `ocr_text`** (pure graphics, charts with no text, or Spotlight hasn't indexed yet): Dispatch a **screenshot-examiner** subagent as a fallback:
+**For files WITHOUT `ocr_text`** (pure graphics, charts with no text, or Spotlight hasn't indexed yet): Create a thumbnail and dispatch the **screenshot-examiner** subagent:
 
-```
-Agent tool call:
-  subagent_type: screenshot-examiner
-  prompt: "Examine the screenshot at /full/path/to/image.png"
-```
+1. **Resize first** — full Retina screenshots (~2880x1800) burn massive vision tokens for a simple categorization. Downscale to 800px wide:
+   ```bash
+   sips -Z 800 "/path/to/original.png" --out "/tmp/agent-look-thumb-TIMESTAMP.png" 2>/dev/null
+   ```
+2. **Dispatch examiner with the thumbnail path:**
+   ```
+   Agent tool call:
+     subagent_type: screenshot-examiner
+     prompt: "Examine the screenshot at /tmp/agent-look-thumb-TIMESTAMP.png"
+   ```
+3. **Clean up thumbnails** after all examiners return:
+   ```bash
+   rm -f /tmp/agent-look-thumb-*.png
+   ```
 
 Launch all examiner agents concurrently. Do NOT read image files in the main context — always delegate to the subagent.
+
+**Also dispatch the examiner** (with thumbnail) for files that have OCR text but appear relevant to the current conversation topic — the richer visual description helps the user decide whether to pull it into the task. Flag these as `(context match)` in the report.
 
 ### Step 5: Rename Automatically
 
@@ -92,20 +103,23 @@ Rename each file immediately — do NOT ask for confirmation:
 Present a compact summary:
 
 ```
-Processed 3 screenshots (last 3 min):
+Processed 4 screenshots (last 3 min):
 
   Screenshot 2026-03-18 at 2.15.32 PM.png → 2026-03-18_1415_ar-aging-summary-table.png
-    AR aging report showing summary by payer with outstanding balances (from OCR)
+    AR aging report showing summary by payer with outstanding balances (OCR)
 
-  Screenshot 2026-03-18 at 2.03.11 PM.png → 2026-03-18_1403_claims-filter-panel.png
-    Claims dashboard filter panel with date range selectors (from examiner)
+  Screenshot 2026-03-18 at 2.14.00 PM.png → 2026-03-18_1414_claims-nav-aba-charts.png
+    Claims nav menu with ABA Charts highlighted (OCR → thumbnail, context match)
+
+  Screenshot 2026-03-18 at 2.03.11 PM.png → 2026-03-18_1403_grafana-cpu-spike.png
+    Grafana dashboard showing CPU spike — no text on chart (thumbnail)
 
   ar-aging-drilldown.png — already named, skipped
 
 Want me to use any of these for the current task?
 ```
 
-Note which slugs came from OCR vs examiner so the user knows what was cheap vs expensive.
+Note the source after each description so the user sees what was cheap (OCR) vs visual (thumbnail).
 
 **CRITICAL:** Do NOT read image files in the main context. Use OCR text or examiner descriptions only.
 
@@ -113,4 +127,5 @@ Note which slugs came from OCR vs examiner so the user knows what was cheap vs e
 
 - If `mdfind` returns no results, check if the screengrabs folder path is correct with `defaults read com.apple.screencapture location`
 - If a rename target already exists, the MCP server appends a numeric suffix (`-2`, `-3`) automatically
-- For very large screenshots (over 10 MB), warn the user before dispatching the examiner
+- If `sips` fails to create a thumbnail, dispatch the examiner with the original path (graceful degradation, just costs more tokens)
+- Always clean up `/tmp/agent-look-thumb-*.png` after the skill completes, even on error
