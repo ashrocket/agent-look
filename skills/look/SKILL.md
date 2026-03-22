@@ -19,13 +19,30 @@ Scan the user's macOS screengrabs folder for recent screenshots, automatically e
 
 ### Step 1: Find Recent Screenshots
 
-Use the MCP tool `find_recent_screenshots` with the minutes argument (default 3). If the MCP tool is unavailable, fall back to direct `mdfind`:
+Use the MCP tool `find_recent_screenshots` with the minutes argument (default 3).
 
-```bash
-mdfind -onlyin "$SCREENGRABS_DIR" 'kMDItemIsScreenCapture = 1' 2>/dev/null
+If the MCP tool is unavailable, fall back to this Python snippet — it handles the time filter and returns the same shape of data without spawning a shell that could mangle paths:
+
+```python
+import os, subprocess, time
+minutes = 3  # or from argument
+screengrabs = os.environ.get("SCREENGRABS_DIR", os.path.expanduser(
+    "~/Library/Mobile Documents/com~apple~CloudDocs/Downloads/screengrabs"))
+cutoff = time.time() - minutes * 60
+raw = subprocess.run(
+    ["mdfind", "-onlyin", screengrabs, "kMDItemIsScreenCapture = 1"],
+    capture_output=True, text=True).stdout.strip()
+files = []
+for p in raw.split("\n"):
+    if not p: continue
+    try:
+        st = os.stat(p)
+        if st.st_mtime >= cutoff:
+            files.append({"path": p, "name": os.path.basename(p),
+                          "mtime": st.st_mtime, "size": st.st_size})
+    except: pass
+files.sort(key=lambda f: f["mtime"], reverse=True)
 ```
-
-Filter by modification time against the recency cutoff and sort by most recent.
 
 ### Step 2: Filter to Generic Names Only
 
@@ -68,7 +85,7 @@ Launch all examiner agents concurrently. Do NOT read image files in the main con
 Rename each file immediately — do NOT ask for confirmation:
 
 1. Use the MCP tool `rename_screenshot` with the file path and the slug (from OCR or examiner). The MCP server handles date-stamping (`YYYY-MM-DD_HHMM_slug.ext`), slug sanitization, and collision avoidance.
-2. If the MCP tool is unavailable, rename directly with `mv` using the format `YYYY-MM-DD_HHMM_descriptive-slug.ext` (date-time from file mtime, slug lowercase/hyphens/max 40 chars).
+2. If the MCP tool is unavailable, use Python — **never `mv`**. macOS screenshot filenames contain U+202F (narrow no-break space) before AM/PM, which breaks all shell string matching. Use `python3 -c "import os; os.rename('src', 'dst')"` with the exact byte paths returned by `mdfind`.
 
 ### Step 6: Report Results
 
