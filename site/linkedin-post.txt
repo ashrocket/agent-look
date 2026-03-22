@@ -1,0 +1,14 @@
+Tired of dragging Screenshot-2026-03-22-at-2.15.32-PM.png into the Claude command line and then having to explain what was wrong?
+
+Same. I am so lazy.
+
+Well now you don't have to drag those files — or add them to Claude Desktop either.
+
+Set your screenshot directory once. Take your screenshots. Come back to Claude and say /look (or just "look at these screenshots from the app"). Claude finds what you captured, shows you a preview list, and only loads what you pick.
+
+It even renames the generic filenames based on what's actually in the image.
+
+agent-look — dead simple, MIT licensed:
+👉 github.com/ashrocket/agent-look
+
+(File an issue if something's broken. PRs welcome. There are probably a million reasons I shouldn't have built this.)

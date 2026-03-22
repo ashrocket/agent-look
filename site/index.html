@@ -1,0 +1,385 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>agent-look — see your screenshots, stop dragging files</title>
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+      background: #1b6b1b;
+      color: #fff;
+      min-height: 100vh;
+    }
+
+    /* ── RIND HEADER ── */
+    header {
+      background: #155215;
+      border-bottom: 6px solid #0e3b0e;
+      padding: 28px 48px;
+      display: flex;
+      align-items: center;
+      gap: 16px;
+    }
+    header .seed {
+      width: 10px; height: 18px;
+      background: #0a280a;
+      border-radius: 50% 50% 50% 50% / 60% 60% 40% 40%;
+      transform: rotate(-20deg);
+    }
+    header h1 {
+      font-size: 1.6rem;
+      font-weight: 700;
+      letter-spacing: -0.5px;
+      color: #c8f0c8;
+    }
+    header h1 span { color: #fff; }
+    header nav { margin-left: auto; }
+    header nav a {
+      color: #9dda9d;
+      text-decoration: none;
+      font-size: 0.9rem;
+      margin-left: 24px;
+    }
+    header nav a:hover { color: #fff; }
+
+    /* ── FLESH HERO ── */
+    .hero {
+      background: #d63545;
+      padding: 72px 48px 64px;
+      position: relative;
+      overflow: hidden;
+    }
+    .hero::before {
+      content: "🍉";
+      position: absolute;
+      right: 48px;
+      top: 24px;
+      font-size: 9rem;
+      opacity: 0.18;
+      transform: rotate(12deg);
+    }
+    .hero h2 {
+      font-size: 3rem;
+      font-weight: 800;
+      line-height: 1.1;
+      max-width: 640px;
+      margin-bottom: 20px;
+      color: #fff;
+    }
+    .hero p {
+      font-size: 1.25rem;
+      color: #ffdde0;
+      max-width: 560px;
+      line-height: 1.6;
+      margin-bottom: 32px;
+    }
+    .hero-buttons { display: flex; gap: 12px; flex-wrap: wrap; }
+    .btn {
+      display: inline-block;
+      padding: 12px 24px;
+      border-radius: 6px;
+      font-size: 0.95rem;
+      font-weight: 600;
+      text-decoration: none;
+      transition: opacity 0.15s;
+    }
+    .btn:hover { opacity: 0.85; }
+    .btn-primary { background: #fff; color: #d63545; }
+    .btn-secondary { background: rgba(255,255,255,0.15); color: #fff; border: 1px solid rgba(255,255,255,0.4); }
+
+    /* ── SEEDS STRIP ── */
+    .seeds {
+      background: #0e3b0e;
+      height: 8px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 32px;
+      padding: 0 48px;
+    }
+    .seeds span {
+      width: 8px; height: 14px;
+      background: #060f06;
+      border-radius: 50% 50% 50% 50% / 60% 60% 40% 40%;
+      transform: rotate(-15deg);
+    }
+    .seeds span:nth-child(even) { transform: rotate(15deg); }
+
+    /* ── HOW IT WORKS ── */
+    .section {
+      padding: 64px 48px;
+      max-width: 880px;
+    }
+    .section h3 {
+      font-size: 0.75rem;
+      text-transform: uppercase;
+      letter-spacing: 2px;
+      color: #9dda9d;
+      margin-bottom: 16px;
+    }
+    .section h2 {
+      font-size: 2rem;
+      font-weight: 700;
+      margin-bottom: 40px;
+      color: #e8f5e8;
+    }
+    .steps { display: flex; gap: 32px; }
+    .step {
+      flex: 1;
+      background: rgba(255,255,255,0.07);
+      border: 1px solid rgba(255,255,255,0.12);
+      border-radius: 10px;
+      padding: 28px 24px;
+    }
+    .step-num {
+      font-size: 2.5rem;
+      font-weight: 800;
+      color: #d63545;
+      line-height: 1;
+      margin-bottom: 12px;
+    }
+    .step h4 {
+      font-size: 1rem;
+      font-weight: 600;
+      color: #e8f5e8;
+      margin-bottom: 8px;
+    }
+    .step p {
+      font-size: 0.9rem;
+      color: #a8cca8;
+      line-height: 1.5;
+    }
+    .step code {
+      background: rgba(0,0,0,0.35);
+      color: #ffcdd2;
+      padding: 2px 6px;
+      border-radius: 4px;
+      font-size: 0.85rem;
+    }
+
+    /* ── INSTALL ── */
+    .install {
+      background: #0e3b0e;
+      padding: 64px 48px;
+    }
+    .install h3 {
+      font-size: 0.75rem;
+      text-transform: uppercase;
+      letter-spacing: 2px;
+      color: #9dda9d;
+      margin-bottom: 16px;
+    }
+    .install h2 {
+      font-size: 2rem;
+      font-weight: 700;
+      color: #e8f5e8;
+      margin-bottom: 32px;
+    }
+    .code-block {
+      background: #060f06;
+      border: 1px solid #1b6b1b;
+      border-radius: 8px;
+      padding: 24px 28px;
+      font-family: "SF Mono", "Fira Code", monospace;
+      font-size: 0.9rem;
+      color: #c8f0c8;
+      max-width: 680px;
+      margin-bottom: 12px;
+    }
+    .code-block .comment { color: #4a8c4a; }
+    .code-block .cmd { color: #fff; }
+    .install .note {
+      font-size: 0.85rem;
+      color: #6aad6a;
+      margin-top: 20px;
+    }
+    .install .note a { color: #9dda9d; }
+
+    /* ── WHAT IT DOES ── */
+    .features {
+      padding: 64px 48px;
+      max-width: 880px;
+    }
+    .features h3 {
+      font-size: 0.75rem;
+      text-transform: uppercase;
+      letter-spacing: 2px;
+      color: #9dda9d;
+      margin-bottom: 16px;
+    }
+    .features h2 {
+      font-size: 2rem;
+      font-weight: 700;
+      color: #e8f5e8;
+      margin-bottom: 36px;
+    }
+    .feature-list { list-style: none; display: flex; flex-direction: column; gap: 16px; max-width: 600px; }
+    .feature-list li {
+      display: flex;
+      gap: 16px;
+      align-items: flex-start;
+    }
+    .feature-list li .icon {
+      font-size: 1.4rem;
+      flex-shrink: 0;
+      margin-top: 2px;
+    }
+    .feature-list li .text strong {
+      display: block;
+      color: #e8f5e8;
+      margin-bottom: 4px;
+    }
+    .feature-list li .text span {
+      font-size: 0.9rem;
+      color: #8aba8a;
+      line-height: 1.5;
+    }
+
+    /* ── FOOTER ── */
+    footer {
+      background: #060f06;
+      border-top: 4px solid #0e3b0e;
+      padding: 36px 48px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+    }
+    footer .watermark {
+      font-size: 0.85rem;
+      color: #4a8c4a;
+    }
+    footer .watermark a { color: #6aad6a; text-decoration: none; }
+    footer .seeds-row { display: flex; gap: 8px; align-items: center; }
+    footer .seeds-row span {
+      width: 7px; height: 13px;
+      background: #1b6b1b;
+      border-radius: 50% 50% 50% 50% / 60% 60% 40% 40%;
+    }
+    footer .seeds-row span:nth-child(2) { transform: rotate(20deg); }
+    footer .seeds-row span:nth-child(3) { transform: rotate(-10deg); }
+  </style>
+</head>
+<body>
+
+  <header>
+    <div class="seed"></div>
+    <h1>🍉 <span>agent-look</span></h1>
+    <nav>
+      <a href="https://github.com/ashrocket/agent-look">GitHub</a>
+      <a href="https://github.com/ashrocket/agent-look/issues">File an issue</a>
+    </nav>
+  </header>
+
+  <div class="hero">
+    <h2>Stop dragging screenshots into Claude.</h2>
+    <p>Take a screenshot. Go back to Claude. Say <strong>/look</strong>. That's it.</p>
+    <div class="hero-buttons">
+      <a href="https://github.com/ashrocket/agent-look" class="btn btn-primary">Get it on GitHub</a>
+      <a href="#install" class="btn btn-secondary">Install in 2 minutes</a>
+    </div>
+  </div>
+
+  <div class="seeds">
+    <span></span><span></span><span></span><span></span>
+    <span></span><span></span><span></span><span></span>
+    <span></span><span></span><span></span><span></span>
+  </div>
+
+  <div class="section">
+    <h3>How it works</h3>
+    <h2>Three steps. Seriously.</h2>
+    <div class="steps">
+      <div class="step">
+        <div class="step-num">1</div>
+        <h4>Set your screenshots folder</h4>
+        <p>Run the installer. Point it at wherever macOS saves your screenshots. Done once.</p>
+      </div>
+      <div class="step">
+        <div class="step-num">2</div>
+        <h4>Take screenshots normally</h4>
+        <p>Nothing changes. <code>⌘⇧4</code>, <code>⌘⇧5</code>, Simulator — all work.</p>
+      </div>
+      <div class="step">
+        <div class="step-num">3</div>
+        <h4>Say <code>/look</code> in Claude</h4>
+        <p>Claude finds your recent screenshots, previews them, and only loads what you pick.</p>
+      </div>
+    </div>
+  </div>
+
+  <div class="seeds">
+    <span></span><span></span><span></span><span></span>
+    <span></span><span></span><span></span><span></span>
+    <span></span><span></span><span></span><span></span>
+  </div>
+
+  <div class="features">
+    <h3>What it actually does</h3>
+    <h2>Smart, not heavy.</h2>
+    <ul class="feature-list">
+      <li>
+        <div class="icon">🔍</div>
+        <div class="text">
+          <strong>Bypasses iCloud TCC restrictions</strong>
+          <span>Uses <code>mdfind kMDItemIsScreenCapture</code> — Spotlight metadata works even on iCloud paths where <code>find</code> throws "Operation not permitted".</span>
+        </div>
+      </li>
+      <li>
+        <div class="icon">🤏</div>
+        <div class="text">
+          <strong>Token-efficient by design</strong>
+          <span>Shows you a list first. You pick which screenshots to load. Images are read in a isolated haiku subagent — never bloating your main context.</span>
+        </div>
+      </li>
+      <li>
+        <div class="icon">✏️</div>
+        <div class="text">
+          <strong>Auto-renames generic filenames</strong>
+          <span>"Screenshot 2026-03-22 at 2.15.32 PM.png" becomes "2026-03-22_1415_login-error-state.png" — based on what's actually in the image.</span>
+        </div>
+      </li>
+      <li>
+        <div class="icon">🔌</div>
+        <div class="text">
+          <strong>Works in Claude Code and Claude Desktop</strong>
+          <span>Installs as a Claude Code plugin or as an MCP server for Claude Desktop. One installer handles both.</span>
+        </div>
+      </li>
+    </ul>
+  </div>
+
+  <div class="install" id="install">
+    <h3>Install</h3>
+    <h2>Claude Code (plugin)</h2>
+    <div class="code-block">
+      <span class="comment"># add the marketplace and install</span><br>
+      <span class="cmd">/plugin marketplace add https://github.com/ashrocket/agent-look</span><br>
+      <span class="cmd">/plugin install agent-look@agent-look-dev</span>
+    </div>
+    <h2 style="margin-top:40px">Claude Desktop (MCP)</h2>
+    <div class="code-block">
+      <span class="comment"># clone and run the installer</span><br>
+      <span class="cmd">git clone git@github.com:ashrocket/agent-look.git</span><br>
+      <span class="cmd">cd agent-look && bash install.sh</span>
+    </div>
+    <p class="note">
+      Something broken? <a href="https://github.com/ashrocket/agent-look/issues">File an issue.</a>
+      Want to improve it? PRs welcome.
+    </p>
+  </div>
+
+  <footer>
+    <div class="watermark">
+      Made by <a href="https://ashley.raiteri.net">Ashley Raiteri</a> &nbsp;·&nbsp;
+      MIT License
+    </div>
+    <div class="seeds-row">
+      <span></span><span></span><span></span>
+    </div>
+  </footer>
+
+</body>
+</html>
