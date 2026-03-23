@@ -1,6 +1,5 @@
 {
   "name": "agent-look",
-  "description": "Screenshot scanner and renamer for AI coding agents",
   "owner": {
     "name": "Ashley Raiteri"
   },
@@ -9,10 +8,7 @@
       "name": "agent-look",
       "description": "Screenshot scanner and renamer. Bypasses iCloud TCC via Spotlight.",
       "version": "0.2.0",
-      "source": "./",
-      "author": {
-        "name": "Ashley Raiteri"
-      }
+      "source": "./"
     }
   ]
 }

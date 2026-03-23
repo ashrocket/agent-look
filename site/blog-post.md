@@ -49,3 +49,7 @@ That last command detects Claude Code, Claude Desktop, Gemini CLI, and Codex and
 **Get it:** [github.com/ashrocket/agent-look](https://github.com/ashrocket/agent-look)
 
 If something's broken, file an issue. I will probably get to it eventually.
+
+---
+
+**One more thing.** If you want the AI to take *its own* screenshots instead of looking at yours, check out Jesse Vincent's [superpowers-chrome](https://github.com/obra/superpowers-chrome). It gives Claude direct browser control via Chrome DevTools Protocol — you can say "look at my local dev server and find the mistake" and it navigates there, takes a screenshot, inspects the DOM, and tells you what's wrong. No manual screenshotting needed. agent-look and superpowers-chrome solve different sides of the same problem: agent-look is for when *you* capture something and want Claude to see it; superpowers-chrome is for when you want Claude to go look at something itself.
