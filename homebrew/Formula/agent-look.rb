@@ -2,7 +2,7 @@ class AgentLook < Formula
   desc "Screenshot scanner & renamer MCP server — works with Claude, Gemini, Codex"
   homepage "https://github.com/ashrocket/agent-look"
   url "https://github.com/ashrocket/agent-look/archive/refs/tags/v0.2.0.tar.gz"
-  sha256 "d6cb860fdd42fdae6903467923cd3d5f86dc620b0517990d2028791b3381f6e6"
+  sha256 "b193b297f608d9f3e4f1a33e714794570497b82b6ee31e3692be881b154a2351"
   license "MIT"
 
   depends_on :macos

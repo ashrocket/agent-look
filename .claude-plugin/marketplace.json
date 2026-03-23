@@ -1,6 +1,6 @@
 {
-  "name": "agent-look-dev",
-  "description": "Development marketplace for agent-look",
+  "name": "agent-look",
+  "description": "Screenshot scanner and renamer for AI coding agents",
   "owner": {
     "name": "Ashley Raiteri"
   },
