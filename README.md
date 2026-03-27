@@ -122,24 +122,18 @@ Refer to your platform's documentation for where to add MCP server entries.
 
 ## Configuration
 
-The `SCREENGRABS_DIR` environment variable controls which folder is scanned. It is set by the installer, but you can change it at any time.
-
-**Default location (if not set):**
-```
-~/Library/Mobile Documents/com~apple~CloudDocs/Downloads/screengrabs
-```
-
-**To change the folder without re-running the installer:**
-
-Edit the MCP server entry in your Claude Desktop config:
+Config file: `~/.config/agent-look/config.json`
 
 ```json
-"env": {
-  "SCREENGRABS_DIR": "~/Pictures/Screenshots"
+{
+  "screencaptureDir": "~/Pictures/Screenshots",
+  "enabledPlatforms": ["claude-desktop", "claude-code"]
 }
 ```
 
-Or, for Claude Code, set the variable in your shell environment before starting the session.
+Edit this file to change your screencapture directory or enabled platforms without re-running the installer. Changes take effect on next tool restart.
+
+**Fallback behavior:** If no config file exists, the server checks the `SCREENGRABS_DIR` environment variable, then defaults to `~/Library/Mobile Documents/com~apple~CloudDocs/Downloads/screengrabs`.
 
 ---
 
