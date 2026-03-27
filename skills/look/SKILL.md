@@ -74,8 +74,10 @@ The MCP tool returns an `ocr_text` field for generic-named files when Spotlight 
 
 1. **Resize first** — full Retina screenshots (~2880x1800) burn massive vision tokens for a simple categorization. Downscale to 800px wide:
    ```bash
-   sips -Z 800 "/path/to/original.png" --out "/tmp/agent-look-thumb-TIMESTAMP.png" 2>/dev/null
+   sips -Z 800 "$originalPath" --out "/tmp/agent-look-thumb-$timestamp.png" 2>/dev/null
    ```
+   **CRITICAL:** Always use proper variable quoting: `"$originalPath"` handles filenames with spaces. The path variable must come directly from `find_recent_screenshots` results, never constructed manually.
+
 2. **Dispatch examiner with the thumbnail path:**
    ```
    Agent tool call:
@@ -96,7 +98,7 @@ Launch all examiner agents concurrently. Do NOT read image files in the main con
 Rename each file immediately — do NOT ask for confirmation:
 
 1. Use the MCP tool `rename_screenshot` with the file path and the slug (from OCR or examiner). The MCP server handles date-stamping (`YYYY-MM-DD_HHMM_slug.ext`), slug sanitization, and collision avoidance.
-2. If the MCP tool is unavailable, use Python — **never `mv`**. macOS screenshot filenames contain U+202F (narrow no-break space) before AM/PM, which breaks all shell string matching. Use `python3 -c "import os; os.rename('src', 'dst')"` with the exact byte paths returned by `mdfind`.
+2. If the MCP tool is unavailable, use Python — **never `mv`**. macOS screenshot filenames contain U+202F (narrow no-break space) before AM/PM AND can have regular spaces, which breaks all shell string matching. Use `python3 -c "import os; os.rename(...)"` with the exact byte paths returned by `mdfind`.
 
 ### Step 6: Report Results
 
@@ -125,6 +127,7 @@ Note the source after each description so the user sees what was cheap (OCR) vs 
 
 ## Edge Cases
 
+- **Filenames with spaces:** Paths from `find_recent_screenshots` may contain spaces or U+202F (non-breaking space). Always use quoted variables when passing to bash: `"$path"` not `$path`. Use `JSON.stringify(path)` when injecting into shell commands, or better yet, use Python's `os.rename()` which handles all Unicode properly.
 - If `mdfind` returns no results, check if the screengrabs folder path is correct with `defaults read com.apple.screencapture location`
 - If a rename target already exists, the MCP server appends a numeric suffix (`-2`, `-3`) automatically
 - If `sips` fails to create a thumbnail, dispatch the examiner with the original path (graceful degradation, just costs more tokens)
