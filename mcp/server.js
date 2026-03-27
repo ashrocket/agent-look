@@ -9,6 +9,7 @@ import { execSync } from "child_process";
 import { existsSync, readFileSync, renameSync, statSync } from "fs";
 import { join, extname, basename, dirname } from "path";
 import { homedir } from "os";
+import { readConfig } from "../lib/config.js";
 
 // Try root package.json first (brew/npm install), fall back to local
 const PKG = JSON.parse(readFileSync(
@@ -18,12 +19,8 @@ const PKG = JSON.parse(readFileSync(
 const DEFAULT_MINUTES = 3;
 const MAX_RENAME_SUFFIX = 99;
 
-const SCREENGRABS =
-  process.env.SCREENGRABS_DIR ||
-  join(
-    homedir(),
-    "Library/Mobile Documents/com~apple~CloudDocs/Downloads/screengrabs"
-  );
+const CONFIG = readConfig();
+const SCREENGRABS = CONFIG.screencaptureDir;
 
 const TOOLS = [
   {
