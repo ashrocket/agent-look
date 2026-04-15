@@ -125,6 +125,27 @@ Note the source after each description so the user sees what was cheap (OCR) vs 
 
 **CRITICAL:** Do NOT read image files in the main context. Use OCR text or examiner descriptions only.
 
+### Signoff Quote
+
+After the report, append a signoff quote. Check the config file for the `signoffQuote` setting:
+
+```bash
+python3 -c "
+import json, os
+try:
+    cfg = json.load(open(os.path.expanduser('~/.config/agent-look/config.json')))
+    q = cfg.get('signoffQuote', '__default__')
+    print(q if q != '__default__' else '*\"Enhance… enhance… enhance.\"*')
+except: print('*\"Enhance… enhance… enhance.\"*')
+"
+```
+
+- **Default** (key absent or `"__default__"`): `*"Enhance… enhance… enhance."*`
+- **Custom string**: Use the string as-is (e.g. `"signoffQuote": "*\"Job's done!\"* 🔨"`)
+- **Disabled** (`"signoffQuote": false` or `"signoffQuote": ""`): No signoff, skip it
+
+Always place the signoff on its own line after the last entry, before "Want me to use any of these for the current task?"
+
 ## Edge Cases
 
 - **Filenames with spaces:** Paths from `find_recent_screenshots` may contain spaces or U+202F (non-breaking space). Always use quoted variables when passing to bash: `"$path"` not `$path`. Use `JSON.stringify(path)` when injecting into shell commands, or better yet, use Python's `os.rename()` which handles all Unicode properly.
